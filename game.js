@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Scene
 const scene = new THREE.Scene();
 
 // Camera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
 camera.position.set(0, 5, 10);
 camera.lookAt(0, 0, 0);
 
@@ -12,6 +13,11 @@ camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+controls.dampingFactor = 0.05;
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -25,7 +31,7 @@ scene.add(directionalLight);
 scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
 // Ground
-const groundGeometry = new THREE.PlaneGeometry(500, 500);
+const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22, side: THREE.DoubleSide }); // Forest green
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat
@@ -78,29 +84,16 @@ function animate() {
 
     // Always move forward
     airplane.position.z -= movementSpeed * 2;
-     if (airplane.position.z < -250) {
-        airplane.position.z = 250;
+     if (airplane.position.z < -1000) {
+        airplane.position.z = 1000;
     }
     
     // Reset rotation slowly
     airplane.rotation.z *= 0.95;
 
-
-    // Camera follows the airplane
-    const idealOffset = new THREE.Vector3(0, 2, 8);
-    idealOffset.applyQuaternion(airplane.quaternion);
-    const idealLookat = new THREE.Vector3(0, 0, -10);
-    idealLookat.applyQuaternion(airplane.quaternion);
-    
-    const cameraPosition = new THREE.Vector3();
-    cameraPosition.copy(airplane.position).add(idealOffset);
-
-    const lookatPosition = new THREE.Vector3();
-    lookatPosition.copy(airplane.position).add(idealLookat);
-
-    camera.position.lerp(cameraPosition, 0.1);
-    camera.lookAt(lookatPosition);
-
+    // Update controls
+    controls.target.copy(airplane.position);
+    controls.update();
 
     renderer.render(scene, camera);
 }
